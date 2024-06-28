@@ -4,7 +4,7 @@
 
 use super::device::Device;
 use super::surface::Surface;
-use crate::context::ContextID;
+use crate::context::{ContextDescriptorInterface as _, ContextID};
 use crate::egl;
 use crate::egl::types::EGLint;
 use crate::platform::generic::egl::context::{self, CurrentContextGuard, EGLBackedContext};
@@ -125,7 +125,7 @@ impl Device {
     #[inline]
     pub fn context_descriptor(&self, context: &Context) -> ContextDescriptor {
         GL_FUNCTIONS.with(|gl| unsafe {
-            ContextDescriptor::from_egl_context(
+            crate::context::ContextDescriptorInterface::from_egl_context(
                 gl,
                 self.native_connection.egl_display,
                 context.0.egl_context,

@@ -37,7 +37,7 @@ impl GLVersion {
     }
 
     #[allow(dead_code)]
-    pub(crate) fn current(gl: &Gl) -> GLVersion {
+    pub fn current(gl: &Gl) -> GLVersion {
         unsafe {
             let version_string = gl.GetString(gl::VERSION) as *const c_char;
             let version_string = CStr::from_ptr(version_string)

@@ -4,6 +4,7 @@
 
 use super::device::{Adapter, Device, NativeDevice};
 use super::surface::NativeWidget;
+use crate::connection::NativeConnection as NativeConnectionInterface;
 use crate::egl;
 use crate::egl::types::{EGLAttrib, EGLDisplay};
 use crate::info::GLApi;
@@ -25,6 +26,11 @@ pub struct Connection {
 /// Native connections.
 #[derive(Clone)]
 pub struct NativeConnection(Arc<NativeConnectionWrapper>);
+impl NativeConnectionInterface for NativeConnection {
+    fn egl_display(&self) -> EGLDisplay {
+        self.0.egl_display
+    }
+}
 
 /// Native connections.
 pub struct NativeConnectionWrapper {

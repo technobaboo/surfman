@@ -5,7 +5,9 @@
 use super::device::{Adapter, Device, NativeDevice};
 use super::surface::NativeWidget;
 use crate::connection::Connection as ConnectionInterface;
+use crate::connection::NativeConnection as NativeConnectionInterface;
 use crate::device::Device as DeviceInterface;
+use crate::egl::types::EGLDisplay;
 use crate::Error;
 use crate::GLApi;
 
@@ -54,6 +56,21 @@ where
     Default(<Def::Connection as ConnectionInterface>::NativeConnection),
     /// The alternate native connection type.
     Alternate(<Alt::Connection as ConnectionInterface>::NativeConnection),
+}
+
+impl<Def, Alt> NativeConnectionInterface for NativeConnection<Def, Alt>
+where
+    Def: DeviceInterface,
+    Alt: DeviceInterface,
+    Def::Connection: ConnectionInterface<Device = Def>,
+    Alt::Connection: ConnectionInterface<Device = Alt>,
+{
+    fn egl_display(&self) -> EGLDisplay {
+        match self {
+            NativeConnection::Default(d) => d.egl_display(),
+            NativeConnection::Alternate(a) => a.egl_display(),
+        }
+    }
 }
 
 impl<Def, Alt> Connection<Def, Alt>

@@ -4,6 +4,7 @@
 
 use super::device::Device;
 use super::surface::Surface;
+use crate::context::{ContextDescriptorInterface, NativeContext as NativeContextInterface};
 use crate::device::Device as DeviceInterface;
 use crate::{ContextAttributes, ContextID, Error, SurfaceInfo};
 
@@ -50,6 +51,50 @@ where
     /// The alternate context descriptor type.
     Alternate(Alt::ContextDescriptor),
 }
+impl<Def, Alt> ContextDescriptorInterface for ContextDescriptor<Def, Alt>
+where
+    Def: DeviceInterface,
+    Alt: DeviceInterface,
+{
+    unsafe fn new(
+        egl_display: crate::egl::types::EGLDisplay,
+        attributes: &ContextAttributes,
+        extra_config_attributes: &[crate::egl::EGLint],
+    ) -> Result<Self, crate::Error> {
+        Ok(ContextDescriptor::Default(Def::ContextDescriptor::new(
+            egl_display,
+            attributes,
+            extra_config_attributes,
+        )?))
+    }
+
+    unsafe fn from_egl_context(
+        gl: &crate::Gl,
+        egl_display: crate::egl::types::EGLDisplay,
+        egl_context: crate::egl::types::EGLContext,
+    ) -> Self {
+        crate::platform::generic::multi::context::ContextDescriptor::Default(
+            Def::ContextDescriptor::from_egl_context(gl, egl_display, egl_context),
+        )
+    }
+
+    unsafe fn to_egl_config(
+        &self,
+        egl_display: crate::egl::types::EGLDisplay,
+    ) -> crate::egl::types::EGLConfig {
+        match self {
+            ContextDescriptor::Default(d) => d.to_egl_config(egl_display),
+            ContextDescriptor::Alternate(a) => a.to_egl_config(egl_display),
+        }
+    }
+
+    unsafe fn attributes(&self, egl_display: crate::egl::types::EGLDisplay) -> ContextAttributes {
+        match self {
+            ContextDescriptor::Default(d) => d.attributes(egl_display),
+            ContextDescriptor::Alternate(a) => a.attributes(egl_display),
+        }
+    }
+}
 
 /// Wraps a platform-specific native context.
 pub enum NativeContext<Def, Alt>
@@ -61,6 +106,18 @@ where
     Default(Def::NativeContext),
     /// The alternate context type.
     Alternate(Alt::NativeContext),
+}
+impl<Def, Alt> NativeContextInterface for NativeContext<Def, Alt>
+where
+    Def: DeviceInterface,
+    Alt: DeviceInterface,
+{
+    fn egl_context(&self) -> crate::egl::types::EGLContext {
+        match self {
+            NativeContext::Default(d) => d.egl_context(),
+            NativeContext::Alternate(a) => a.egl_context(),
+        }
+    }
 }
 
 impl<Def, Alt> Device<Def, Alt>

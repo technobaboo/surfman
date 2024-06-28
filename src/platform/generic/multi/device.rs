@@ -262,6 +262,17 @@ where
     }
 
     #[inline]
+    fn create_surface_texture_from_gl(
+        &self,
+        context: &mut Self::Context,
+        size: &Size2D<i32>,
+        texture_object: GLuint,
+        egl_target: GLuint,
+    ) -> Result<Self::SurfaceTexture, Error> {
+        Device::create_surface_texture_from_gl(self, context, size, texture_object, egl_target)
+    }
+
+    #[inline]
     fn destroy_surface(
         &self,
         context: &mut Context<Def, Alt>,

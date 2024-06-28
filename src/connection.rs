@@ -2,6 +2,7 @@
 //
 //! The abstract interface that all connections conform to.
 
+use crate::egl::types::EGLDisplay;
 use crate::Error;
 use crate::GLApi;
 
@@ -10,13 +11,19 @@ use euclid::default::Size2D;
 use std::os::raw::c_void;
 
 /// Methods relating to display server connections.
+pub trait NativeConnection: Sized {
+    /// Gets the EGLDisplay that is created from the connection.
+    fn egl_display(&self) -> EGLDisplay;
+}
+
+/// Methods relating to display server connections.
 pub trait Connection: Sized {
     /// The adapter type associated with this connection.
     type Adapter;
     /// The device type associated with this connection.
     type Device;
     /// The native type associated with this connection.
-    type NativeConnection;
+    type NativeConnection: NativeConnection;
     /// The native device type associated with this connection.
     type NativeDevice;
     /// The native widget type associated with this connection.

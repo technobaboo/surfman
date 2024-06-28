@@ -4,7 +4,7 @@
 
 use super::device::Device;
 use super::surface::Surface;
-use crate::context::ContextID;
+use crate::context::{ContextDescriptorInterface, ContextID};
 use crate::egl;
 use crate::egl::types::EGLint;
 use crate::platform::generic::egl::context::{self, CurrentContextGuard, EGLBackedContext};

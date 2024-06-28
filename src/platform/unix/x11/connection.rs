@@ -4,6 +4,7 @@
 
 use super::device::{Device, NativeDevice};
 use super::surface::NativeWidget;
+use crate::connection::NativeConnection as NativeConnectionInterface;
 use crate::egl;
 use crate::egl::types::{EGLAttrib, EGLDisplay};
 use crate::error::Error;
@@ -53,6 +54,11 @@ pub struct NativeConnection {
     pub egl_display: EGLDisplay,
     /// The corresponding Xlib Display. This must be present; do not pass NULL.
     pub x11_display: *mut Display,
+}
+impl NativeConnectionInterface for NativeConnection {
+    fn egl_display(&self) -> EGLDisplay {
+        self.egl_display
+    }
 }
 
 impl Drop for NativeConnectionWrapper {

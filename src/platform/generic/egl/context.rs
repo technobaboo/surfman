@@ -7,6 +7,7 @@ use super::error::ToWindowingApiError;
 use super::ffi::EGL_CONTEXT_OPENGL_PROFILE_MASK;
 use super::ffi::{EGL_CONTEXT_MINOR_VERSION_KHR, EGL_CONTEXT_OPENGL_COMPATIBILITY_PROFILE_BIT};
 use super::surface::{EGLBackedSurface, ExternalEGLSurfaces};
+use crate::context::NativeContext as NativeContextInterface;
 use crate::context::{self, CREATE_CONTEXT_MUTEX};
 use crate::egl;
 use crate::egl::types::{EGLConfig, EGLContext, EGLDisplay, EGLSurface, EGLint};
@@ -40,6 +41,11 @@ pub struct NativeContext {
     pub egl_read_surface: EGLSurface,
     /// The EGL draw surface that is to be attached to that context.
     pub egl_draw_surface: EGLSurface,
+}
+impl NativeContextInterface for NativeContext {
+    fn egl_context(&self) -> EGLContext {
+        self.egl_context
+    }
 }
 
 /// Information needed to create a context. Some APIs call this a "config" or a "pixel format".
@@ -260,8 +266,8 @@ impl NativeContext {
     }
 }
 
-impl ContextDescriptor {
-    pub(crate) unsafe fn new(
+impl crate::context::ContextDescriptorInterface for ContextDescriptor {
+    unsafe fn new(
         egl_display: EGLDisplay,
         attributes: &ContextAttributes,
         extra_config_attributes: &[EGLint],
@@ -380,7 +386,7 @@ impl ContextDescriptor {
         })
     }
 
-    pub(crate) unsafe fn from_egl_context(
+    unsafe fn from_egl_context(
         gl: &Gl,
         egl_display: EGLDisplay,
         egl_context: EGLContext,
@@ -402,7 +408,7 @@ impl ContextDescriptor {
     }
 
     #[allow(dead_code)]
-    pub(crate) unsafe fn to_egl_config(&self, egl_display: EGLDisplay) -> EGLConfig {
+    unsafe fn to_egl_config(&self, egl_display: EGLDisplay) -> EGLConfig {
         let config_attributes = [
             egl::CONFIG_ID as EGLint,
             self.egl_config_id,
@@ -427,7 +433,7 @@ impl ContextDescriptor {
         })
     }
 
-    pub(crate) unsafe fn attributes(&self, egl_display: EGLDisplay) -> ContextAttributes {
+    unsafe fn attributes(&self, egl_display: EGLDisplay) -> ContextAttributes {
         let egl_config = egl_config_from_id(egl_display, self.egl_config_id);
 
         let alpha_size = get_config_attr(egl_display, egl_config, egl::ALPHA_SIZE as EGLint);

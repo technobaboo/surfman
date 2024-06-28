@@ -3,6 +3,7 @@
 //! The abstract interface that all devices conform to.
 
 use super::connection::Connection as ConnectionInterface;
+use crate::context::{ContextDescriptorInterface, NativeContext};
 use crate::gl::types::{GLenum, GLuint};
 use crate::{ContextAttributes, ContextID, Error, GLApi, SurfaceAccess, SurfaceInfo, SurfaceType};
 use euclid::default::Size2D;
@@ -12,18 +13,15 @@ use std::os::raw::c_void;
 /// A thread-local handle to a device.
 ///
 /// Devices contain most of the relevant surface management methods.
-pub trait Device: Sized
-where
-    Self::Connection: ConnectionInterface,
-{
+pub trait Device: Sized {
     /// The connection type associated with this device.
-    type Connection;
+    type Connection: ConnectionInterface;
     /// The context type associated with this device.
     type Context;
     /// The context descriptor type associated with this device.
-    type ContextDescriptor;
+    type ContextDescriptor: ContextDescriptorInterface;
     /// The native context type associated with this device.
-    type NativeContext;
+    type NativeContext: NativeContext;
     /// The surface type associated with this device.
     type Surface;
     /// The surface texture type associated with this device.
@@ -170,6 +168,24 @@ where
         context: &mut Self::Context,
         surface: Self::Surface,
     ) -> Result<Self::SurfaceTexture, (Error, Self::Surface)>;
+
+    /// Creates a surface texture from an existing GL texture for use with the given context.
+    ///
+    /// The surface texture is local to the supplied context and takes ownership of the surface.
+    /// Destroying the surface texture allows you to retrieve the surface again.
+    ///
+    /// *The supplied context does not have to be the same context that the surface is associated
+    /// with.* This allows you to render to a surface in one context and sample from that surface
+    /// in another context.
+    ///
+    /// Calling this method on a widget surface returns a `WidgetAttached` error.
+    fn create_surface_texture_from_gl(
+        &self,
+        context: &mut Self::Context,
+        size: &Size2D<i32>,
+        texture_object: GLuint,
+        egl_target: GLuint,
+    ) -> Result<Self::SurfaceTexture, Error>;
 
     /// Destroys a surface.
     ///

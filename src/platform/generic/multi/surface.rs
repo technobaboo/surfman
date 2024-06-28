@@ -179,6 +179,44 @@ where
         }
     }
 
+    /// Creates a surface texture from an existing GL texture for use with the given context.
+    ///
+    /// The surface texture is local to the supplied context and takes ownership of the surface.
+    /// Destroying the surface texture allows you to retrieve the surface again.
+    ///
+    /// *The supplied context does not have to be the same context that the surface is associated
+    /// with.* This allows you to render to a surface in one context and sample from that surface
+    /// in another context.
+    ///
+    /// Calling this method on a widget surface returns a `WidgetAttached` error.
+    pub fn create_surface_texture_from_gl(
+        &self,
+        context: &mut Context<Def, Alt>,
+        size: &Size2D<i32>,
+        texture_object: GLuint,
+        egl_target: GLuint,
+    ) -> Result<SurfaceTexture<Def, Alt>, Error> {
+        match (self, &mut *context) {
+            (&Device::Default(ref device), &mut Context::Default(ref mut context)) => Ok(
+                SurfaceTexture::Default(device.create_surface_texture_from_gl(
+                    context,
+                    size,
+                    texture_object,
+                    egl_target,
+                )?),
+            ),
+            (&Device::Alternate(ref device), &mut Context::Alternate(ref mut context)) => Ok(
+                SurfaceTexture::Alternate(device.create_surface_texture_from_gl(
+                    context,
+                    size,
+                    texture_object,
+                    egl_target,
+                )?),
+            ),
+            _ => Err(Error::IncompatibleContext),
+        }
+    }
+
     /// Destroys a surface.
     ///
     /// The supplied context must be the context the surface is associated with, or this returns

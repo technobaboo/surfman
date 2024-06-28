@@ -45,7 +45,10 @@ pub mod error;
 pub use crate::error::{Error, WindowingApiError};
 
 mod context;
-pub use crate::context::{ContextAttributeFlags, ContextAttributes, ContextID};
+pub use crate::context::{
+    ContextAttributeFlags, ContextAttributes, ContextDescriptorInterface, ContextID,
+    NativeContext as NativeContextInterface,
+};
 
 mod info;
 pub use crate::info::{GLApi, GLVersion};

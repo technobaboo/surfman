@@ -153,6 +153,49 @@ impl Device {
         })
     }
 
+    /// Creates a surface texture from an existing GL texture for use with the given context.
+    ///
+    /// The surface texture is local to the supplied context and takes ownership of the surface.
+    /// Destroying the surface texture allows you to retrieve the surface again.
+    ///
+    /// *The supplied context does not have to be the same context that the surface is associated
+    /// with.* This allows you to render to a surface in one context and sample from that surface
+    /// in another context.
+    ///
+    /// Calling this method on a widget surface returns a `WidgetAttached` error.
+    pub fn create_surface_texture_from_gl(
+        &self,
+        context: &mut Context,
+        size: &Size2D<i32>,
+        texture_object: GLuint,
+        egl_target: GLuint,
+    ) -> Result<SurfaceTexture, Error> {
+        let context_descriptor = self.context_descriptor(context);
+        let context_attributes = self.context_descriptor_attributes(&context_descriptor);
+        let _guard = match self.temporarily_make_context_current(context) {
+            Ok(guard) => guard,
+            Err(err) => return Err(err),
+        };
+
+        let surface = GL_FUNCTIONS.with(|gl| {
+            EGLBackedSurface::new_from_gl_texture(
+                gl,
+                self.native_connection.egl_display,
+                context.0.egl_context,
+                context.0.id,
+                &context_attributes,
+                size,
+                texture_object,
+                egl_target,
+            )
+        });
+        Ok(SurfaceTexture(EGLSurfaceTexture {
+            surface,
+            texture_object,
+            phantom: PhantomData,
+        }))
+    }
+
     /// Destroys a surface.
     ///
     /// The supplied context must be the context the surface is associated with, or this returns

@@ -4,6 +4,8 @@
 
 #![allow(unused_imports)]
 
+use crate::egl::types::{EGLConfig, EGLContext, EGLDisplay};
+use crate::egl::EGLint;
 use crate::gl;
 use crate::gl::types::GLuint;
 use crate::info::GLVersion;
@@ -12,6 +14,23 @@ use crate::Gl;
 use std::ffi::CStr;
 use std::os::raw::c_char;
 use std::sync::Mutex;
+
+/// Methods relating to native contexts.
+pub trait NativeContext {
+    /// Get the EGLContext backing this.
+    fn egl_context(&self) -> EGLContext;
+}
+
+pub trait ContextDescriptorInterface: Sized {
+    unsafe fn new(
+        egl_display: EGLDisplay,
+        attributes: &ContextAttributes,
+        extra_config_attributes: &[EGLint],
+    ) -> Result<Self, crate::Error>;
+    unsafe fn from_egl_context(gl: &Gl, egl_display: EGLDisplay, egl_context: EGLContext) -> Self;
+    unsafe fn to_egl_config(&self, egl_display: EGLDisplay) -> EGLConfig;
+    unsafe fn attributes(&self, egl_display: EGLDisplay) -> ContextAttributes;
+}
 
 /// A unique ID among all currently-allocated contexts.
 ///

@@ -4,6 +4,7 @@
 
 use super::context::CurrentContextGuard;
 use super::device::EGL_FUNCTIONS;
+use super::ffi::EGL_GL_TEXTURE_2D_KHR;
 use crate::egl;
 use crate::egl::types::{EGLAttrib, EGLConfig, EGLContext, EGLDisplay, EGLSurface, EGLint};
 use crate::gl;
@@ -13,7 +14,6 @@ use crate::platform::generic::egl::error::ToWindowingApiError;
 use crate::platform::generic::egl::ffi::EGLClientBuffer;
 use crate::platform::generic::egl::ffi::EGLImageKHR;
 use crate::platform::generic::egl::ffi::EGL_EXTENSION_FUNCTIONS;
-use crate::platform::generic::egl::ffi::EGL_GL_TEXTURE_2D_KHR;
 use crate::platform::generic::egl::ffi::EGL_IMAGE_PRESERVED_KHR;
 use crate::platform::generic::egl::ffi::EGL_NO_IMAGE_KHR;
 use crate::renderbuffers::Renderbuffers;
@@ -84,13 +84,6 @@ impl EGLBackedSurface {
         context_attributes: &ContextAttributes,
         size: &Size2D<i32>,
     ) -> EGLBackedSurface {
-        let egl_image_attribs = [
-            EGL_IMAGE_PRESERVED_KHR as EGLint,
-            egl::FALSE as EGLint,
-            egl::NONE as EGLint,
-            0,
-        ];
-
         unsafe {
             // Create our texture.
             let mut texture_object = 0;
@@ -124,16 +117,48 @@ impl EGLBackedSurface {
                 gl.BindBuffer(gl::PIXEL_UNPACK_BUFFER, unpack_buffer as _);
             }
 
+            EGLBackedSurface::new_from_gl_texture(
+                gl,
+                egl_display,
+                egl_context,
+                context_id,
+                context_attributes,
+                size,
+                texture_object,
+                EGL_GL_TEXTURE_2D_KHR,
+            )
+        }
+    }
+
+    /// Create a new EGLBackedSurface from an existing GL texture
+    pub(crate) fn new_from_gl_texture(
+        gl: &Gl,
+        egl_display: EGLDisplay,
+        egl_context: EGLContext,
+        context_id: ContextID,
+        context_attributes: &ContextAttributes,
+        size: &Size2D<i32>,
+        texture_object: GLuint,
+        egl_target: GLuint,
+    ) -> EGLBackedSurface {
+        let egl_image_attribs = [
+            EGL_IMAGE_PRESERVED_KHR as EGLint,
+            egl::FALSE as EGLint,
+            egl::NONE as EGLint,
+            0,
+        ];
+
+        unsafe {
             // Create our image.
             let egl_client_buffer = texture_object as usize as EGLClientBuffer;
             let egl_image = (EGL_EXTENSION_FUNCTIONS.CreateImageKHR)(
                 egl_display,
                 egl_context,
-                EGL_GL_TEXTURE_2D_KHR,
+                egl_target,
                 egl_client_buffer,
                 egl_image_attribs.as_ptr(),
             );
-
+            
             // Create the framebuffer, and bind the texture to it.
             let framebuffer_object =
                 gl_utils::create_and_bind_framebuffer(gl, gl::TEXTURE_2D, texture_object);
@@ -405,6 +430,7 @@ pub(crate) unsafe fn bind_egl_image_to_gl_texture(gl: &Gl, egl_image: EGLImageKH
 
     let mut texture_binding = 0;
     gl.GetIntegerv(gl::TEXTURE_BINDING_2D, &mut texture_binding);
+    dbg!(texture_binding);
 
     // FIXME(pcwalton): Should this be `GL_TEXTURE_EXTERNAL_OES`?
     gl.BindTexture(gl::TEXTURE_2D, texture);

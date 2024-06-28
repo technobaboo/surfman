@@ -76,3 +76,10 @@ pub(crate) unsafe fn lookup_egl_extension(name: &'static [u8]) -> *mut c_void {
     EGL_FUNCTIONS
         .with(|egl| mem::transmute(egl.GetProcAddress(&name[0] as *const u8 as *const c_char)))
 }
+
+pub type EGLProcAddressRaw =
+    unsafe extern "system" fn(*const c_char) -> Option<unsafe extern "system" fn()>;
+/// Get the EGLProcAddress c function
+pub fn get_proc_address_raw() -> EGLProcAddressRaw {
+    unsafe { std::mem::transmute(get_proc_address("eglGetProcAddress")) }
+}

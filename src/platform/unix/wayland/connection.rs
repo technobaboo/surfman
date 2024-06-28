@@ -4,6 +4,7 @@
 
 use super::device::{Adapter, Device, NativeDevice};
 use super::surface::NativeWidget;
+use crate::connection::NativeConnection as NativeConnectionInterface;
 use crate::egl;
 use crate::egl::types::{EGLAttrib, EGLDisplay};
 use crate::info::GLApi;
@@ -30,6 +31,11 @@ pub(crate) struct NativeConnectionWrapper {
 
 /// An EGL display wrapping a Wayland display.
 pub struct NativeConnection(pub EGLDisplay);
+impl NativeConnectionInterface for NativeConnection {
+    fn egl_display(&self) -> EGLDisplay {
+        self.0
+    }
+}
 
 unsafe impl Send for Connection {}
 
